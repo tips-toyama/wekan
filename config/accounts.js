@@ -80,19 +80,12 @@ AccountsTemplates.configure({
   forbidClientAccountCreation: disableRegistration,
   onLogoutHook() {
     // here comeslogic for redirect
-    if(oidcRedirectionEnabled)
-    {
-      window.location = oauthServerUrl + oauthDashboardUrl;
-    }
-    else
-    {
       const homePage = 'home';
       if (FlowRouter.getRouteName() === homePage) {
         FlowRouter.reload();
       } else {
         FlowRouter.go(homePage);
       }
-    }
   },
 });
 
