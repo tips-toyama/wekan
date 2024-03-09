@@ -12,7 +12,7 @@ Oidc.requestCredential = function (options, credentialRequestCompleteCallback) {
     options = {};
   }
 
-  Meteor.call("getServiceConfiguration", "oidc",(_, result) => {
+  Meteor.call("getServiceConfiguration", "oidc", (_, result) => {
     if (result) {
       var config = result;
       var credentialToken = Random.secret();
@@ -44,10 +44,15 @@ Oidc.requestCredential = function (options, credentialRequestCompleteCallback) {
       }
 
       //console.log('XXX: loginURL: ' + loginUrl)
+      if (config.loginStyle && config.loginStyle == 'popup') {
+        options.display = 'popup';
+      } else if (config.loginStyle && config.loginStyle == 'redirect') {
+        options.display = 'redirect';
+      }
 
       options.popupOptions = options.popupOptions || {};
       var popupOptions = {
-        width:  options.popupOptions.width || 320,
+        width: options.popupOptions.width || 320,
         height: options.popupOptions.height || 450
       };
 
@@ -60,13 +65,38 @@ Oidc.requestCredential = function (options, credentialRequestCompleteCallback) {
         popupOptions: popupOptions,
       });
     }
-    else
-    {
+    else {
       credentialRequestCompleteCallback && credentialRequestCompleteCallback(
         new ServiceConfiguration.ConfigError('Service oidc not configured.'));
       return;
     }
+    loginUrl += encodeURIComponent(k) + '=' + encodeURIComponent(options[k]);
+
+    //console.log('XXX: loginURL: ' + loginUrl)
+
+    if (config.loginStyle && config.loginStyle == 'popup') {
+      options.popupOptions = options.popupOptions || {};
+      var popupOptions = {
+        width: options.popupOptions.width || 320,
+        height: options.popupOptions.height || 450
+      };
+
+      OAuth.launchLogin({
+        loginService: 'oidc',
+        loginStyle: loginStyle,
+        loginUrl: loginUrl,
+        credentialRequestCompleteCallback: credentialRequestCompleteCallback,
+        credentialToken: credentialToken,
+        popupOptions: popupOptions,
+      });
+    } else if (config.loginStyle && config.loginStyle == 'redirect') {
+      OAuth.launchLogin({
+        loginService: 'oidc',
+        loginStyle: loginStyle,
+        loginUrl: loginUrl,
+        credentialRequestCompleteCallback: credentialRequestCompleteCallback,
+        credentialToken: credentialToken,
+      });
+    }
   });
-
-
-};
+}
